@@ -19,6 +19,7 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
+import RPi.GPIO as GPIO
 import sys
 import time
 import httplib, urllib
@@ -26,6 +27,8 @@ import json
 import time
 import Adafruit_DHT
 
+GPIO.setmode(GPIO.BCM)
+GPIO.setup(3,GPIO.IN,pull_up_down=GPIO.PUD_UP)
 deviceId ="DWatJNOh" 
 deviceKey ="C8D0zStlR1uLaXWF"
 def post_to_mcs(payload): 
@@ -70,14 +73,20 @@ humidity, temperature = Adafruit_DHT.read_retry(sensor, pin)
 # guarantee the timing of calls to read the sensor).
 # If this happens try again!
 while True:
+	SwitchStatus=GPIO.input(3)
+	if(SwitchStatus == 0):
+		print('Button pressed')
+	else:
+		print('Button released')
         h0,t0= Adafruit_DHT.read_retry(sensor, pin)
         if h0 is not None and t0 is not None:
                 print('Temp={0:0.1f}*  Humidity={1:0.1f}%'.format(t0, h0))
 
                 payload = {"datapoints":[{"dataChnId":"Humidity","values":{"value":h0}},
-                        {"dataChnId":"Temperature","values":{"value":t0}}]} 
+                        {"dataChnId":"Temperature","values":{"value":t0}},
+			{"dataChnId":"SwitchStatus","values":{"value":SwitchStatus}}]} 
                 post_to_mcs(payload)
-                time.sleep(10) 
+                time.sleep(1) 
 
         else:
                 print('Failed to get reading. Try again!')
